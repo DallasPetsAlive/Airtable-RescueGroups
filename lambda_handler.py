@@ -1,8 +1,13 @@
 import csv
+import ftplib
 import logging
-from os import name
 import requests
-from config import AIRTABLE_BASE, AIRTABLE_API_KEY
+from config import (
+    AIRTABLE_BASE,
+    AIRTABLE_API_KEY,
+    FTP_USERNAME,
+    FTP_PASSWORD,
+)
 from constants import CSV_HEADERS
 
 
@@ -165,7 +170,5 @@ def create_csv_file(airtable_pets):
 
 
 def upload_to_rescue_groups(csv_file):
-    pass
-
-
-lambda_handler(None, None)
+    with ftplib.FTP("ftp.rescuegroups.org", FTP_USERNAME, FTP_PASSWORD) as ftp, open(csv_file, 'rb') as file:
+        ftp.storbinary(f"STOR {csv_file}", file)
