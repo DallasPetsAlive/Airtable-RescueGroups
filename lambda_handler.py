@@ -7,6 +7,7 @@ from config import (
     AIRTABLE_API_KEY,
     FTP_USERNAME,
     FTP_PASSWORD,
+    FILEPATH,
 )
 from constants import CSV_HEADERS
 
@@ -49,7 +50,8 @@ def get_airtable_pets():
 
 def create_csv_file(airtable_pets):
     filename = "newdigs.csv"
-    with open(filename, "w", newline="") as f:
+    file = FILEPATH + filename
+    with open(file, "w", newline="") as f:
         writer = csv.writer(f)
 
         # headers from rescuegroups.org sample file
@@ -170,5 +172,6 @@ def create_csv_file(airtable_pets):
 
 
 def upload_to_rescue_groups(csv_file):
-    with ftplib.FTP("ftp.rescuegroups.org", FTP_USERNAME, FTP_PASSWORD) as ftp, open(csv_file, 'rb') as file:
+    file_upload = FILEPATH + csv_file
+    with ftplib.FTP("ftp.rescuegroups.org", FTP_USERNAME, FTP_PASSWORD) as ftp, open(file_upload, 'rb') as file:
         ftp.storbinary(f"STOR {csv_file}", file)
