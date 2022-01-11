@@ -1,11 +1,9 @@
 import csv
 import pytest
-from pytest_mock import mocker
 
 from config import AIRTABLE_BASE, FTP_USERNAME, FTP_PASSWORD
 from constants import CSV_HEADERS
 from lambda_handler import (
-    lambda_handler,
     get_airtable_pets,
     create_csv_file,
     upload_to_rescue_groups,
