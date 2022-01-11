@@ -174,4 +174,5 @@ def create_csv_file(airtable_pets):
 def upload_to_rescue_groups(csv_file):
     file_upload = FILEPATH + csv_file
     with ftplib.FTP("ftp.rescuegroups.org", FTP_USERNAME, FTP_PASSWORD) as ftp, open(file_upload, 'rb') as file:
+        ftp.cwd("import")
         ftp.storbinary(f"STOR {csv_file}", file)
