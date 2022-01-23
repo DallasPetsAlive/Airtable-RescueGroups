@@ -1,7 +1,8 @@
+"""Test Airtable to RescueGroups.org sync."""
+import configparser
 import csv
 import pytest
 
-from config import AIRTABLE_BASE, FTP_USERNAME, FTP_PASSWORD
 from constants import CSV_HEADERS
 from lambda_handler import (
     get_airtable_pets,
@@ -9,6 +10,8 @@ from lambda_handler import (
     upload_to_rescue_groups,
 )
 
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 animals = [
     {
@@ -95,10 +98,11 @@ animals = [
 
 
 def test_get_pets(requests_mock):
+    """Test getting pets from Airtable (mocked)."""
     records = {
         "records": [{"a thing": "a pet"}],
     }
-    url = "https://api.airtable.com/v0/" + AIRTABLE_BASE + "/Pets"
+    url = "https://api.airtable.com/v0/" + config["AIRTABLE"]["BASE"] + "/Pets"
     requests_mock.get(url, json=records, status_code=200)
 
     pets = get_airtable_pets()
@@ -107,10 +111,11 @@ def test_get_pets(requests_mock):
 
 
 def test_get_pets_error(requests_mock):
+    """Test getting pets from Airtable with a mocked error."""
     records = {
         "records": [{"a thing": "a pet"}],
     }
-    url = "https://api.airtable.com/v0/" + AIRTABLE_BASE + "/Pets"
+    url = "https://api.airtable.com/v0/" + config["AIRTABLE"]["BASE"] + "/Pets"
     requests_mock.get(url, json=records, status_code=400)
 
     with pytest.raises(Exception):
@@ -118,10 +123,11 @@ def test_get_pets_error(requests_mock):
 
 
 def test_get_pets_bad_data(requests_mock):
+    """Test getting pets from Airtable with mocked bad data."""
     records = {
         "this is wrong": "nope",
     }
-    url = "https://api.airtable.com/v0/" + AIRTABLE_BASE + "/Pets"
+    url = "https://api.airtable.com/v0/" + config["AIRTABLE"]["BASE"] + "/Pets"
     requests_mock.get(url, json=records, status_code=200)
 
     with pytest.raises(KeyError):
@@ -129,10 +135,11 @@ def test_get_pets_bad_data(requests_mock):
 
 
 def test_csv_file():
+    """Test creating a csv file with animals."""
     filename = create_csv_file(animals)
     assert filename == "newdigs.csv"
 
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         reader = csv.reader(f)
         header = reader.__next__()
 
@@ -169,11 +176,50 @@ def test_csv_file():
                 ]
 
 
+def test_csv_file_empty():
+    """Test creating a csv file when we have no pets."""
+    empty_animals = []
+    filename = create_csv_file(empty_animals)
+    assert filename == "newdigs.csv"
+
+    with open(filename, "r", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        header = reader.__next__()
+
+        assert header == CSV_HEADERS
+
+        row_count = 0
+
+        for row in reader:
+            assert row_count == 0
+            row_count += 1
+
+            assert row[0] == "1"
+
+            assert row == [
+                "1", "Deleted", "", "", "Temporary Deleted Dog",
+                "Dog", "Beagle", "", "", "",
+                "", "", "", "", "",
+                "", "", "", "", "",
+                "Tan", "", "", "",
+                "",
+                "", "", "", "",
+                "", "", "", "",
+            ]
+
+        assert row_count == 1
+
+
 def test_ftp_upload(mocker):
+    """Mock testing of FTP upload to rescuegroups."""
     ftp_constructor_mock = mocker.patch("ftplib.FTP")
     ftp_mock = ftp_constructor_mock.return_value
 
     upload_to_rescue_groups("newdigs.csv")
 
-    ftp_constructor_mock.assert_called_with("ftp.rescuegroups.org", FTP_USERNAME, FTP_PASSWORD)
+    ftp_constructor_mock.assert_called_with(
+        "ftp.rescuegroups.org",
+        config["RESCUEGROUPS"]["FTP_USERNAME"],
+        config["RESCUEGROUPS"]["FTP_PASSWORD"],
+    )
     assert ftp_mock.__enter__().storbinary.called
