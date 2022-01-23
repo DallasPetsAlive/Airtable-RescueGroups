@@ -97,89 +97,92 @@ def create_csv_file(airtable_pets: list) -> str:
             "photo4": CSV_HEADERS.index("photo4"),
         }
 
-        if len(airtable_pets) > 0:
-            for pet in airtable_pets:
-                # if pet isn't available or isn't a supported species, bail
-                status: str = pet["fields"].get("Status", "")
-                if "Published - Available" not in status:
-                    continue
+        pets_found = False
+        for pet in airtable_pets:
+            # if pet isn't available or isn't a supported species, bail
+            status: str = pet["fields"].get("Status", "")
+            if "Published - Available" not in status:
+                continue
 
-                species: str = pet["fields"].get("Pet Species", "")
-                if species not in ("Dog", "Cat"):
-                    continue
+            species: str = pet["fields"].get("Pet Species", "")
+            if species not in ("Dog", "Cat"):
+                continue
 
-                pet_row: list = [None for _ in range(len(CSV_HEADERS))]
+            pets_found = True
 
-                pet_row[indexes["id"]] = pet["id"]
-                pet_row[indexes["name"]] = pet["fields"].get("Pet Name")
-                pet_row[indexes["status"]] = "Available"
-                pet_row[indexes["species"]] = species
-                pet_row[indexes["sex"]] = pet["fields"].get("Sex")
-                pet_row[indexes["age"]] = pet["fields"].get("Pet Age")
-                pet_row[indexes["needs"]] = pet["fields"].get("Special Needs")
-                pet_row[indexes["size"]] = pet["fields"].get("Pet Size")
-                pet_row[indexes["length"]] = pet["fields"].get("Coat Length")
-                pet_row[indexes["courtesy"]] = "Yes"
-                pet_row[indexes["found"]] = "No"
+            pet_row: list = [None for _ in range(len(CSV_HEADERS))]
 
-                if pet["fields"].get("Mixed Breed") == "No":
-                    pet_row[indexes["mix"]] = "No"
-                else:
-                    pet_row[indexes["mix"]] = "Yes"
+            pet_row[indexes["id"]] = pet["id"]
+            pet_row[indexes["name"]] = pet["fields"].get("Pet Name")
+            pet_row[indexes["status"]] = "Available"
+            pet_row[indexes["species"]] = species
+            pet_row[indexes["sex"]] = pet["fields"].get("Sex")
+            pet_row[indexes["age"]] = pet["fields"].get("Pet Age")
+            pet_row[indexes["needs"]] = pet["fields"].get("Special Needs")
+            pet_row[indexes["size"]] = pet["fields"].get("Pet Size")
+            pet_row[indexes["length"]] = pet["fields"].get("Coat Length")
+            pet_row[indexes["courtesy"]] = "Yes"
+            pet_row[indexes["found"]] = "No"
 
-                if species == "Dog":
-                    pet_row[indexes["breed"]] = (
-                        pet["fields"].get("Breed - Dog")
-                    )
-                    pet_row[indexes["color"]] = (
-                        pet["fields"].get("Color - Dog")
-                    )
-                elif species == "Cat":
-                    pet_row[indexes["breed"]] = (
-                        pet["fields"].get("Breed - Cat")
-                    )
-                    pet_row[indexes["color"]] = (
-                        pet["fields"].get("Color - Cat")
-                    )
+            if pet["fields"].get("Mixed Breed") == "No":
+                pet_row[indexes["mix"]] = "No"
+            else:
+                pet_row[indexes["mix"]] = "Yes"
 
-                pet_row[indexes["ok_dog"]] = (
-                    pet["fields"].get("Okay with Dogs")
+            if species == "Dog":
+                pet_row[indexes["breed"]] = (
+                    pet["fields"].get("Breed - Dog")
                 )
-                pet_row[indexes["ok_cat"]] = (
-                    pet["fields"].get("Okay with Cats")
+                pet_row[indexes["color"]] = (
+                    pet["fields"].get("Color - Dog")
                 )
-                pet_row[indexes["ok_kid"]] = (
-                    pet["fields"].get("Okay with Kids")
+            elif species == "Cat":
+                pet_row[indexes["breed"]] = (
+                    pet["fields"].get("Breed - Cat")
                 )
-                pet_row[indexes["declawed"]] = pet["fields"].get("Declawed")
-                pet_row[indexes["house"]] = pet["fields"].get("Housetrained")
-                pet_row[indexes["fixed"]] = pet["fields"].get("Altered")
-                pet_row[indexes["utd"]] = (
-                    pet["fields"].get("Up-to-date on Shots etc")
+                pet_row[indexes["color"]] = (
+                    pet["fields"].get("Color - Cat")
                 )
 
-                description: str = pet["fields"].get("Public Description", "")
-                description = description.replace("\r", "<br />")
-                description = description.replace("\n", "<br />")
-                pet_row[indexes["dsc"]] = description
+            pet_row[indexes["ok_dog"]] = (
+                pet["fields"].get("Okay with Dogs")
+            )
+            pet_row[indexes["ok_cat"]] = (
+                pet["fields"].get("Okay with Cats")
+            )
+            pet_row[indexes["ok_kid"]] = (
+                pet["fields"].get("Okay with Kids")
+            )
+            pet_row[indexes["declawed"]] = pet["fields"].get("Declawed")
+            pet_row[indexes["house"]] = pet["fields"].get("Housetrained")
+            pet_row[indexes["fixed"]] = pet["fields"].get("Altered")
+            pet_row[indexes["utd"]] = (
+                pet["fields"].get("Up-to-date on Shots etc")
+            )
 
-                pictures: list = []
-                for picture in pet["fields"].get("Pictures", []):
-                    pictures.append(picture["url"])
+            description: str = pet["fields"].get("Public Description", "")
+            description = description.replace("\r", "<br />")
+            description = description.replace("\n", "<br />")
+            pet_row[indexes["dsc"]] = description
 
-                if pictures:
-                    pet_row[indexes["photo1"]] = pictures.pop(0)
-                if pictures:
-                    pet_row[indexes["photo2"]] = pictures.pop(0)
-                if pictures:
-                    pet_row[indexes["photo3"]] = pictures.pop(0)
-                if pictures:
-                    pet_row[indexes["photo4"]] = pictures.pop(0)
+            pictures: list = []
+            for picture in pet["fields"].get("Pictures", []):
+                pictures.append(picture["url"])
 
-                pet_row = fix_unknowns(pet_row, indexes)
+            if pictures:
+                pet_row[indexes["photo1"]] = pictures.pop(0)
+            if pictures:
+                pet_row[indexes["photo2"]] = pictures.pop(0)
+            if pictures:
+                pet_row[indexes["photo3"]] = pictures.pop(0)
+            if pictures:
+                pet_row[indexes["photo4"]] = pictures.pop(0)
 
-                writer.writerow(pet_row)
-        else:
+            pet_row = fix_unknowns(pet_row, indexes)
+
+            writer.writerow(pet_row)
+
+        if not pets_found:
             # for empty pet list
             pet_row = [None for _ in range(len(CSV_HEADERS))]
 

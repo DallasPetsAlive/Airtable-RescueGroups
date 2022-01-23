@@ -30,7 +30,7 @@ animals = [
     {
         "id": "3",
         "fields": {
-            "Status": "Published",
+            "Status": "Published - Available for Adoption",
             "Pet Species": "Dog",
             "Pet Name": "Fido",
             "Sex": "Male",
@@ -60,7 +60,7 @@ animals = [
     {
         "id": "4",
         "fields": {
-            "Status": "x Published",
+            "Status": "x Published - Available",
             "Pet Species": "Cat",
             "Pet Name": "Freya",
             "Sex": "Female",
@@ -178,7 +178,26 @@ def test_csv_file():
 
 def test_csv_file_empty():
     """Test creating a csv file when we have no pets."""
-    empty_animals = []
+    empty_animals = [
+        {
+            "id": "1",
+            "fields": {
+                "Status": "Adopted",
+            },
+        },
+        {
+            "id": "2",
+            "fields": {
+                "Status": "Accepted, Published",
+            },
+        },
+        {
+            "id": "3",
+            "fields": {
+                "Status": "Accepted",
+            },
+        },
+    ]
     filename = create_csv_file(empty_animals)
     assert filename == "newdigs.csv"
 
